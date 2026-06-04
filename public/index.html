@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contact Report Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:       #0c0b09;
+  --black-2:     #141310;
+  --black-3:     #1e1c18;
+  --black-4:     #2a2822;
+  --black-5:     #3a3830;
+  --orange:      #e8601c;
+  --orange-dim:  #c04e12;
+  --orange-glow: rgba(232,96,28,0.18);
+  --gold:        #d4a235;
+  --gold-light:  #f0cc78;
+  --gold-pale:   #fdf3dc;
+  --cream:       #f5f0e8;
+  --cream-2:     #ede6d8;
+  --white:       #ffffff;
+  --text-muted:  rgba(245,240,232,0.45);
+  --text-dim:    rgba(245,240,232,0.65);
+  --border:      rgba(245,240,232,0.08);
+  --border-md:   rgba(245,240,232,0.14);
+  --border-gold: rgba(212,162,53,0.30);
+  --radius:      10px;
+  --radius-lg:   16px;
+  --radius-xl:   22px;
+}
+
+html { font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--black);
+  color: var(--cream);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+.app-shell { display: flex; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
+
+/* ── Header ── */
+header {
+  background: var(--black);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px; position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-icon {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border-gold);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(212,162,53,0.07);
+}
+.logo-text  { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--gold-light); font-weight: 600; letter-spacing: 0.3px; }
+.logo-sub   { font-size: 9px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-weight: 300; margin-top: 1px; }
+.header-pill {
+  font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px;
+  border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px;
+}
+
+/* ── Main ── */
+main { flex: 1; max-width: 1160px; margin: 0 auto; width: 100%; padding: 3rem 2rem; }
+
+/* ── Hero ── */
+.hero { text-align: center; margin-bottom: 3.5rem; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border-gold); border-radius: 20px;
+  padding: 5px 16px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1.5rem; background: rgba(212,162,53,0.06);
+}
+.hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.05;
+  margin-bottom: 1.25rem;
+}
+.hero-title em { color: var(--gold-light); font-style: italic; }
+.hero-desc {
+  font-size: 16px; color: var(--text-dim); max-width: 560px; margin: 0 auto;
+  line-height: 1.75; font-weight: 300;
+}
+
+/* ── Workspace ── */
+.workspace       { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; align-items: start; }
+.workspace.single { grid-template-columns: 560px; justify-content: center; }
+
+/* ── Cards ── */
+.card {
+  background: var(--black-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+.card-body { padding: 1.5rem; }
+.card + .card { margin-top: 1rem; }
+
+.card-orange { border-color: rgba(232,96,28,0.25); background: rgba(232,96,28,0.05); }
+.card-gold   { border-color: var(--border-gold); background: rgba(212,162,53,0.04); }
+
+/* ── Field labels ── */
+.field-label {
+  display: block; font-size: 10px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 10px;
+}
+
+/* ── Mode toggle ── */
+.mode-toggle { display: flex; gap: 6px; background: var(--black-3); border-radius: 12px; padding: 5px; }
+.mode-btn {
+  flex: 1; padding: 9px 0; font-size: 13px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  border: none; border-radius: 8px; cursor: pointer;
+  transition: all 0.18s; color: var(--text-muted); background: transparent;
+}
+.mode-btn.active { background: var(--orange); color: var(--white); }
+.mode-btn:not(.active):hover { color: var(--cream); background: var(--black-5); }
+
+/* ── Drop zone ── */
+.dropzone {
+  border: 1.5px dashed var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  background: var(--black-3);
+}
+.dropzone:hover, .dropzone.over { border-color: var(--orange); background: rgba(232,96,28,0.06); }
+.dropzone.has-file { background: rgba(212,162,53,0.05); border-color: var(--gold); border-style: solid; }
+.dropzone-icon  { font-size: 30px; margin-bottom: 8px; }
+.dropzone-title { font-size: 14px; font-weight: 500; color: var(--cream); margin-bottom: 4px; }
+.dropzone-hint  { font-size: 12px; color: var(--text-muted); }
+
+.file-info { display: flex; align-items: center; gap: 12px; text-align: left; }
+.file-icon { width: 40px; height: 40px; flex-shrink: 0; background: rgba(212,162,53,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.file-name { font-size: 13px; font-weight: 500; color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-size { font-size: 12px; color: var(--text-muted); }
+.file-clear { margin-left: auto; flex-shrink: 0; width: 24px; height: 24px; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.12s, color 0.12s; }
+.file-clear:hover { background: var(--black-5); color: var(--cream); }
+
+/* ── Generate button ── */
+.btn-primary {
+  width: 100%; padding: 16px;
+  font-size: 15px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--orange);
+  color: var(--white);
+  border: none; border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background 0.18s, transform 0.1s;
+  letter-spacing: 0.2px;
+  position: relative; overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.btn-primary:hover:not(:disabled) { background: var(--orange-dim); }
+.btn-primary:active:not(:disabled) { transform: scale(0.985); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Ghost / small buttons ── */
+.btn-ghost {
+  padding: 0 14px; height: 32px; font-size: 12px;
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+  color: var(--text-dim); background: var(--black-4);
+  border: 1px solid var(--border-md); border-radius: 8px;
+  cursor: pointer; white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-ghost:hover { background: var(--black-5); color: var(--cream); }
+
+.btn-sm { padding: 5px 14px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; border-radius: 7px; cursor: pointer; transition: all 0.12s; border: none; }
+.btn-sm-ghost  { background: var(--black-4); border: 1px solid var(--border-md); color: var(--text-dim); }
+.btn-sm-ghost:hover { background: var(--black-5); color: var(--cream); }
+.btn-sm-gold   { background: var(--orange); border: 1px solid var(--orange); color: var(--white); }
+.btn-sm-gold:hover { background: var(--orange-dim); }
+.btn-sm-active { background: rgba(212,162,53,0.15); border: 1px solid var(--border-gold); color: var(--gold-light); }
+
+/* ── Progress ── */
+.progress-card { border-left: 3px solid var(--orange); border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+.progress-inner { display: flex; align-items: center; gap: 14px; }
+.spinner { width: 20px; height: 20px; flex-shrink: 0; border: 2px solid var(--black-5); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.75s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-label  { font-size: 14px; font-weight: 500; color: var(--cream); }
+.progress-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── Steps ── */
+.steps { display: flex; gap: 6px; margin-bottom: 1rem; }
+.step { flex: 1; height: 2px; border-radius: 2px; background: var(--black-5); transition: background 0.3s; }
+.step.done   { background: var(--gold); }
+.step.active { background: var(--orange); opacity: 0.7; }
+
+/* ── Alert ── */
+.alert { padding: 12px 14px; border-radius: var(--radius); font-size: 13px; line-height: 1.5; }
+.alert-danger { background: rgba(232,96,28,0.1); border: 1px solid rgba(232,96,28,0.25); color: #f4946a; }
+
+/* ── Stats ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-cell  { background: var(--black-3); border-radius: 10px; padding: 10px 12px; }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 3px; font-weight: 500; }
+.stat-value { font-size: 12px; font-weight: 500; color: var(--cream); line-height: 1.3; }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+/* ── Report panel ── */
+.report-panel {
+  background: var(--black-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+.report-tabs  { display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 1.5rem; background: var(--black-3); }
+.tab-btn {
+  padding: 14px 16px; font-size: 13px;
+  font-family: 'DM Sans', sans-serif; font-weight: 400;
+  color: var(--text-muted); background: none; border: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color 0.12s; margin-bottom: -1px;
+}
+.tab-btn.active { color: var(--gold-light); font-weight: 500; border-bottom-color: var(--orange); }
+.tab-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.report-body { padding: 2rem; }
+
+/* ── Rendered report ── */
+.report-header-block {
+  background: var(--black-3);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  margin-bottom: 2rem;
+  position: relative; overflow: hidden;
+}
+.report-header-block::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,162,53,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.rh-eyebrow   { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; font-weight: 500; }
+.rh-title     { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--gold-light); margin-bottom: 1.5rem; line-height: 1.15; font-weight: 600; }
+.rh-meta      { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 14px; }
+.rh-meta-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); font-weight: 500; margin-bottom: 3px; }
+.rh-meta-val   { font-size: 13px; color: var(--cream); }
+
+.report-section { margin-bottom: 1.75rem; }
+.report-section-label {
+  font-size: 9px; font-weight: 500; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.report-section-content { font-size: 13.5px; color: var(--text-dim); line-height: 1.8; white-space: pre-line; }
+
+.report-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* ── Transcript ── */
+.transcript-content {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  line-height: 1.8; color: var(--text-muted); white-space: pre-wrap;
+  max-height: 600px; overflow-y: auto; padding-right: 4px;
+}
+.transcript-content::-webkit-scrollbar { width: 4px; }
+.transcript-content::-webkit-scrollbar-track { background: var(--black-3); border-radius: 2px; }
+.transcript-content::-webkit-scrollbar-thumb { background: var(--black-5); border-radius: 2px; }
+
+/* ── Edit textarea ── */
+.edit-textarea {
+  width: 100%; min-height: 560px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  line-height: 1.75; color: var(--cream);
+  background: var(--black-3);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius); padding: 1.25rem;
+  resize: vertical; outline: none;
+}
+.edit-textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,96,28,0.1); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: var(--black-3); border: 1px solid var(--border-gold);
+  color: var(--gold-light); padding: 10px 18px;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 9999;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── Paste textarea ── */
+#transcript-paste {
+  width: 100%; min-height: 160px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  line-height: 1.75; color: var(--cream);
+  background: var(--black-3);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius); padding: 1rem;
+  resize: vertical; outline: none;
+}
+#transcript-paste::placeholder { color: var(--text-muted); }
+#transcript-paste:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,96,28,0.1); }
+
+/* ── Or divider ── */
+.or-divider {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 11px; color: var(--text-muted); margin: 0.75rem 0;
+}
+.or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+@media (max-width: 880px) {
+  .workspace, .workspace.single { grid-template-columns: 1fr; }
+  main { padding: 1.5rem 1rem; }
+  header { padding: 0 1.25rem; }
+  .hero { margin-bottom: 2rem; }
+  .hero-title { font-size: 42px; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header>
+    <div class="logo">
+      <img src="../Cerebre Plus 1.png" width="100px" height="auto" alt="Cerebre Plus" style="display:block" />
+    </div>
+    <div class="header-pill">Gemini · Claude · DOCX</div>
+  </header>
+
+  <main>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-dot"></span>
+        AI-Powered Contact Reports
+      </div>
+      <h1 class="hero-title">
+        Your Meetings,<br>
+        <em>Instantly Documented.</em>
+      </h1>
+      <p class="hero-desc">Upload a recording or paste a transcript. Claude extracts every decision, action item, and key insight structured into a professional report in seconds.</p>
+    </div>
+
+    <div class="workspace single" id="workspace">
+
+      <!-- Controls -->
+      <div id="controls-col">
+
+        <!-- Input mode -->
+        <div class="card card-body">
+          <label class="field-label">Input Type</label>
+          <div class="mode-toggle">
+            <button id="mode-audio"      class="mode-btn active" onclick="setMode('audio')">🎙 Audio / Video</button>
+            <button id="mode-transcript" class="mode-btn"        onclick="setMode('transcript')">📄 Transcript</button>
+          </div>
+        </div>
+
+        <!-- Audio upload -->
+        <div class="card" id="upload-card" style="margin-top:1rem">
+          <div class="card-body">
+            <label class="field-label">Meeting Recording</label>
+            <div class="dropzone" id="dropzone"
+              ondragover="handleDragOver(event,'dropzone')"
+              ondragleave="handleDragLeave(event,'dropzone')"
+              ondrop="handleDrop(event)"
+              onclick="document.getElementById('file-input').click()">
+              <input type="file" id="file-input" accept=".mp3,.mp4,.m4a,.wav,.ogg,.webm,.flac" style="display:none" onchange="handleFileSelect(event)" />
+              <div id="dropzone-empty">
+                <div class="dropzone-icon">🎙</div>
+                <div class="dropzone-title">Drop a recording here</div>
+                <div class="dropzone-hint">or click to browse · MP3, MP4, WAV, M4A, OGG, FLAC · max 50 MB</div>
+              </div>
+              <div id="dropzone-file" style="display:none">
+                <div class="file-info">
+                  <div class="file-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M4 3h9l4 4v10H4V3z" stroke="#d4a235" stroke-width="1.3" fill="none"/>
+                      <path d="M13 3v4h4" stroke="#d4a235" stroke-width="1.3" fill="none"/>
+                      <circle cx="10" cy="13" r="2.5" stroke="#d4a235" stroke-width="1.2" fill="none"/>
+                      <path d="M10 10.5v-2.5" stroke="#d4a235" stroke-width="1.2"/>
+                    </svg>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div class="file-name" id="file-name-display">—</div>
+                    <div class="file-size" id="file-size-display">—</div>
+                  </div>
+                  <button class="file-clear" onclick="clearFile(event)" title="Remove">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transcript upload -->
+        <div class="card" id="transcript-card" style="margin-top:1rem;display:none">
+          <div class="card-body">
+            <label class="field-label">Transcript File or Paste</label>
+            <div class="dropzone" id="dropzone-txt"
+              ondragover="handleDragOver(event,'dropzone-txt')"
+              ondragleave="handleDragLeave(event,'dropzone-txt')"
+              ondrop="handleDropTxt(event)"
+              onclick="document.getElementById('file-input-txt').click()"
+              style="margin-bottom:0.75rem">
+              <input type="file" id="file-input-txt" accept=".txt,.text,.md" style="display:none" onchange="handleFileTxtSelect(event)" />
+              <div id="dropzone-txt-empty">
+                <div class="dropzone-icon">📄</div>
+                <div class="dropzone-title">Drop a .txt / .md transcript here</div>
+                <div class="dropzone-hint">or click to browse · max 50 MB</div>
+              </div>
+              <div id="dropzone-txt-file" style="display:none">
+                <div class="file-info">
+                  <div class="file-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M4 3h9l4 4v10H4V3z" stroke="#d4a235" stroke-width="1.3" fill="none"/>
+                      <path d="M13 3v4h4" stroke="#d4a235" stroke-width="1.3" fill="none"/>
+                    </svg>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div class="file-name" id="file-txt-name-display">—</div>
+                    <div class="file-size" id="file-txt-size-display">—</div>
+                  </div>
+                  <button class="file-clear" onclick="clearTxtFile(event)" title="Remove">✕</button>
+                </div>
+              </div>
+            </div>
+            <div class="or-divider">or paste below</div>
+            <textarea id="transcript-paste" placeholder="Paste your meeting transcript here…" oninput="handlePasteInput()"></textarea>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div id="error-box" class="alert alert-danger" style="display:none;margin-top:1rem"></div>
+
+        <!-- Progress -->
+        <div class="card progress-card" id="progress-card" style="display:none;margin-top:1rem">
+          <div class="card-body">
+            <div class="steps" id="steps">
+              <div class="step" id="step-1"></div>
+              <div class="step" id="step-2"></div>
+            </div>
+            <div class="progress-inner">
+              <div class="spinner"></div>
+              <div>
+                <div class="progress-label" id="progress-label">Processing…</div>
+                <div class="progress-detail" id="progress-detail"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <button class="btn-primary" id="generate-btn" style="margin-top:1rem" onclick="handleGenerate()">
+          Generate Contact Report →
+        </button>
+
+        <!-- Stats -->
+        <div class="card" id="stats-card" style="display:none;margin-top:1rem">
+          <div class="card-body">
+            <div class="field-label">Report Summary</div>
+            <div class="stats-grid" id="stats-grid"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Report panel -->
+      <div id="report-col" style="display:none">
+        <div class="report-panel">
+          <div class="report-tabs">
+            <button class="tab-btn active" id="tab-report"     onclick="switchTab('report')">Contact Report</button>
+            <button class="tab-btn"        id="tab-transcript" onclick="switchTab('transcript')">Transcript</button>
+            <div class="tab-actions">
+              <button class="btn-sm btn-sm-ghost" id="edit-btn" onclick="toggleEdit()" style="display:none">Edit</button>
+              <button class="btn-sm btn-sm-ghost" onclick="copyContent()">Copy</button>
+              <button class="btn-sm btn-sm-gold"  id="docx-btn" onclick="downloadDocx()">⬇ .docx</button>
+              <button class="btn-sm btn-sm-ghost" onclick="downloadReport()">.txt</button>
+            </div>
+          </div>
+          <div class="report-body">
+            <div id="report-rendered"></div>
+            <div id="report-edit" style="display:none">
+              <textarea class="edit-textarea" id="report-textarea" oninput="editableText = this.value"></textarea>
+            </div>
+            <div id="transcript-view" style="display:none">
+              <div class="transcript-content" id="transcript-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let currentMode    = 'audio';
+let currentFile    = null;
+let currentTxtFile = null;
+let transcriptText = '';
+let reportFields   = null;
+let reportText     = '';
+let editableText   = '';
+let activeTab      = 'report';
+let isEditing      = false;
+let isProcessing   = false;
+
+const ACCEPTED_AUDIO = ['.mp3','.mp4','.m4a','.wav','.ogg','.webm','.flac'];
+const ACCEPTED_TEXT  = ['.txt','.text','.md'];
+const MAX_SIZE       = 50 * 1024 * 1024;
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('upload-card').style.display     = mode === 'audio'      ? 'block' : 'none';
+  document.getElementById('transcript-card').style.display = mode === 'transcript' ? 'block' : 'none';
+  document.getElementById('mode-audio').className      = 'mode-btn ' + (mode === 'audio'      ? 'active' : '');
+  document.getElementById('mode-transcript').className = 'mode-btn ' + (mode === 'transcript' ? 'active' : '');
+  clearError();
+}
+
+function formatSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function acceptFile(f) {
+  if (!f) return;
+  const ext = '.' + f.name.split('.').pop().toLowerCase();
+  if (!ACCEPTED_AUDIO.includes(ext)) { showError('Unsupported file type. Please upload MP3, MP4, WAV, M4A, OGG, or FLAC.'); return; }
+  if (f.size > MAX_SIZE) { showError('File too large. Maximum is 50 MB.'); return; }
+  clearError();
+  currentFile = f;
+  document.getElementById('file-name-display').textContent = f.name;
+  document.getElementById('file-size-display').textContent = formatSize(f.size);
+  document.getElementById('dropzone-empty').style.display  = 'none';
+  document.getElementById('dropzone-file').style.display   = 'block';
+  document.getElementById('dropzone').classList.add('has-file');
+}
+
+function clearFile(e) {
+  if (e) e.stopPropagation();
+  currentFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('dropzone-empty').style.display = 'block';
+  document.getElementById('dropzone-file').style.display  = 'none';
+  document.getElementById('dropzone').classList.remove('has-file');
+}
+
+function acceptTxtFile(f) {
+  if (!f) return;
+  const ext = '.' + f.name.split('.').pop().toLowerCase();
+  if (!ACCEPTED_TEXT.includes(ext)) { showError('Please upload a .txt or .md transcript file.'); return; }
+  if (f.size > MAX_SIZE) { showError('File too large. Maximum is 50 MB.'); return; }
+  clearError();
+  currentTxtFile = f;
+  document.getElementById('file-txt-name-display').textContent = f.name;
+  document.getElementById('file-txt-size-display').textContent = formatSize(f.size);
+  document.getElementById('dropzone-txt-empty').style.display  = 'none';
+  document.getElementById('dropzone-txt-file').style.display   = 'block';
+  document.getElementById('dropzone-txt').classList.add('has-file');
+  document.getElementById('transcript-paste').value = '';
+}
+
+function clearTxtFile(e) {
+  if (e) e.stopPropagation();
+  currentTxtFile = null;
+  document.getElementById('file-input-txt').value = '';
+  document.getElementById('dropzone-txt-empty').style.display = 'block';
+  document.getElementById('dropzone-txt-file').style.display  = 'none';
+  document.getElementById('dropzone-txt').classList.remove('has-file');
+}
+
+function handlePasteInput() {
+  if (document.getElementById('transcript-paste').value.trim()) clearTxtFile(null);
+}
+
+function handleFileSelect(e)    { acceptFile(e.target.files[0]); }
+function handleFileTxtSelect(e) { acceptTxtFile(e.target.files[0]); }
+function handleDragOver(e, id)  { e.preventDefault(); if (!isProcessing) document.getElementById(id).classList.add('over'); }
+function handleDragLeave(e, id) { document.getElementById(id).classList.remove('over'); }
+function handleDrop(e)          { e.preventDefault(); document.getElementById('dropzone').classList.remove('over');     if (!isProcessing) acceptFile(e.dataTransfer.files[0]); }
+function handleDropTxt(e)       { e.preventDefault(); document.getElementById('dropzone-txt').classList.remove('over'); if (!isProcessing) acceptTxtFile(e.dataTransfer.files[0]); }
+
+function showError(msg) { const el = document.getElementById('error-box'); el.textContent = msg; el.style.display = 'block'; }
+function clearError()   { document.getElementById('error-box').style.display = 'none'; }
+
+function setStep(n) {
+  document.getElementById('step-1').className = 'step ' + (n > 1 ? 'done' : n === 1 ? 'active' : '');
+  document.getElementById('step-2').className = 'step ' + (n > 2 ? 'done' : n === 2 ? 'active' : '');
+}
+
+function setProgress(label, detail, step) {
+  isProcessing = true;
+  document.getElementById('progress-label').textContent  = label;
+  document.getElementById('progress-detail').textContent = detail || '';
+  document.getElementById('progress-card').style.display = 'block';
+  document.getElementById('generate-btn').disabled       = true;
+  document.getElementById('generate-btn').textContent    = label;
+  if (step) setStep(step);
+}
+
+function clearProgress() {
+  isProcessing = false;
+  document.getElementById('progress-card').style.display = 'none';
+  document.getElementById('generate-btn').disabled       = false;
+  document.getElementById('generate-btn').textContent    = 'Regenerate Report →';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function apiUpload(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res  = await fetch('/api/upload', { method: 'POST', body: form });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Upload failed');
+  return data;
+}
+
+async function apiAnalyse(transcript) {
+  const res  = await fetch('/api/analyse', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ transcript })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Analysis failed');
+  return data;
+}
+
+async function handleGenerate() {
+  clearError();
+  try {
+    if (currentMode === 'audio') {
+      if (!currentFile) { showError('Please upload a meeting recording first.'); return; }
+      setProgress('Transcribing audio…', 'Gemini is processing the recording — this may take 30–90 seconds.', 1);
+      const up = await apiUpload(currentFile);
+      transcriptText = up.transcript;
+    } else {
+      let rawTranscript = '';
+      if (currentTxtFile) {
+        setProgress('Reading transcript…', 'Loading your transcript file.', 1);
+        const up = await apiUpload(currentTxtFile);
+        rawTranscript = up.transcript;
+      } else {
+        rawTranscript = document.getElementById('transcript-paste').value.trim();
+        if (!rawTranscript) { showError('Please paste a transcript or upload a .txt file.'); return; }
+        setStep(1);
+      }
+      transcriptText = rawTranscript;
+    }
+    setProgress('Analysing conversation…', 'Claude is extracting decisions, action items, and key points.', 2);
+    const result = await apiAnalyse(transcriptText);
+    reportFields = result.fields;
+    reportText   = result.reportText;
+    editableText = result.reportText;
+    clearProgress();
+    renderReport();
+    showReportPanel();
+  } catch (err) {
+    clearProgress();
+    showError(err.message || 'Something went wrong. Please try again.');
+  }
+}
+
+function renderReport() {
+  const f = reportFields;
+  if (!f) return;
+  const meta = [
+    { label:'Client',    val: f.client },
+    { label:'Date',      val: f.date },
+    { label:'Time',      val: f.time },
+    { label:'Duration',  val: f.duration },
+    { label:'Venue',     val: f.venue },
+    { label:'Follow-up', val: f.followUpDate },
+  ];
+  const sections = [
+    { label:'Meeting Objective',     key:'objective' },
+    { label:'Key Discussion Points', key:'discussionPoints' },
+    { label:'Decisions Made',        key:'decisions' },
+    { label:'Action Items',          key:'actionItems' },
+    { label:'Next Steps',            key:'nextSteps' },
+    { label:'Additional Notes',      key:'additionalNotes' },
+  ];
+  document.getElementById('report-rendered').innerHTML = `
+    <div class="report-header-block">
+      <div class="rh-eyebrow">Contact Report</div>
+      <div class="rh-title">${esc(f.meetingType || 'Meeting')}</div>
+      <div class="rh-meta">
+        ${meta.filter(m=>m.val).map(m=>`<div><div class="rh-meta-label">${m.label}</div><div class="rh-meta-val">${esc(m.val)}</div></div>`).join('')}
+      </div>
+    </div>
+    ${f.attendees ? `<div class="report-section"><div class="report-section-label">Attendees</div><div class="report-section-content">${esc(f.attendees)}</div></div><hr class="report-divider"/>` : ''}
+    ${sections.map(s => f[s.key] ? `<div class="report-section"><div class="report-section-label">${s.label}</div><div class="report-section-content">${esc(f[s.key])}</div></div>` : '').join('')}
+  `;
+  document.getElementById('transcript-content').textContent = transcriptText;
+  document.getElementById('report-textarea').value = editableText;
+  document.getElementById('stats-grid').innerHTML = [
+    ['Meeting type', f.meetingType], ['Date', f.date],
+    ['Duration', f.duration],        ['Follow-up', f.followUpDate]
+  ].map(([l,v]) => `<div class="stat-cell"><div class="stat-label">${l}</div><div class="stat-value">${esc(v||'—')}</div></div>`).join('');
+  document.getElementById('stats-card').style.display = 'block';
+}
+
+function showReportPanel() {
+  document.getElementById('report-col').style.display = 'block';
+  document.getElementById('workspace').classList.remove('single');
+  document.getElementById('hero').style.display       = 'none';
+  document.getElementById('edit-btn').style.display   = 'inline-block';
+  switchTab('report');
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-report').classList.toggle('active', tab === 'report');
+  document.getElementById('tab-transcript').classList.toggle('active', tab === 'transcript');
+  document.getElementById('report-rendered').style.display   = tab === 'report' && !isEditing ? 'block' : 'none';
+  document.getElementById('report-edit').style.display       = tab === 'report' && isEditing  ? 'block' : 'none';
+  document.getElementById('transcript-view').style.display   = tab === 'transcript'           ? 'block' : 'none';
+  document.getElementById('edit-btn').style.display          = tab === 'report' ? 'inline-block' : 'none';
+}
+
+function toggleEdit() {
+  isEditing = !isEditing;
+  const btn = document.getElementById('edit-btn');
+  btn.textContent = isEditing ? 'Done' : 'Edit';
+  btn.className   = isEditing ? 'btn-sm btn-sm-active' : 'btn-sm btn-sm-ghost';
+  if (isEditing) document.getElementById('report-textarea').value = editableText;
+  else editableText = document.getElementById('report-textarea').value;
+  switchTab('report');
+}
+
+function copyContent() {
+  const text = activeTab === 'transcript' ? transcriptText : editableText;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard ✓'));
+}
+
+function downloadReport() {
+  const blob = new Blob([editableText || reportText], { type:'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'Contact_Report_' + new Date().toISOString().slice(0,10) + '.txt';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('Downloaded .txt');
+}
+
+async function downloadDocx() {
+  if (!reportFields) { showToast('Generate a report first.'); return; }
+  const btn = document.getElementById('docx-btn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try {
+    const res = await fetch('/api/export-docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:   JSON.stringify({ fields: reportFields })
+    });
+    if (!res.ok) { const d = await res.json(); showError('DOCX error: ' + (d.error||'Unknown')); return; }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const dt   = (reportFields.date || new Date().toISOString().slice(0,10)).replace(/[^a-zA-Z0-9-]/g,'-');
+    a.href = url; a.download = `Contact-Report-${dt}.docx`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    showToast('Downloaded .docx ✓');
+  } catch (err) {
+    showError('DOCX download failed: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇ .docx';
+  }
+}
+
+// Add id to hero for hiding after report generated
+document.querySelector('.hero').id = 'hero';
+</script>
+</body>
+</html>
